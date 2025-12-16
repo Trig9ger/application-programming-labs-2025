@@ -17,11 +17,12 @@ class MyWidget(QWidget):
         super().__init__()
 
         self.button = QPushButton("Выбрать файл")
+        self.button.setFixedSize(300, 40)
         self.button.clicked.connect(self.select_file)
 
         # Размещаем кнопку
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.button)
+        self.layout.addWidget(self.button, alignment=QtCore.Qt.AlignCenter)
         self.setLayout(self.layout)
 
         self.annotation_name = ""
@@ -35,14 +36,14 @@ class MyWidget(QWidget):
 
         self.button_up = QPushButton("+")
         self.button_down = QPushButton("-")
+        self.button_up.setFixedSize(100, 40)
+        self.button_down.setFixedSize(100, 40)
 
         self.button_next = QPushButton("Next image!")
         self.button_delete = QPushButton("Delete this image!")
 
 
 
-        self.image_section_layout = QHBoxLayout()
-        self.image_scale_text_layout = QVBoxLayout()
         self.image_scale_layout = QHBoxLayout()
 
         self.button_layout = QHBoxLayout()
@@ -78,21 +79,14 @@ class MyWidget(QWidget):
         self.button.deleteLater()
         self.button = None
 
-        print(1)
-
         #расположение
-        self.image_scale_text_layout.addWidget(self.text)
+        self.layout.addWidget(self.text, alignment=QtCore.Qt.AlignBottom)
 
-        self.image_scale_layout.addWidget(self.button_up)
-        self.image_scale_layout.addWidget(self.button_down)
+        self.image_scale_layout.addWidget(self.button_up, alignment=QtCore.Qt.AlignBottom)
+        self.image_scale_layout.addWidget(self.button_down, alignment=QtCore.Qt.AlignBottom)
+        self.layout.addLayout(self.image_scale_layout)
 
-        self.image_scale_text_layout.addLayout(self.image_scale_layout)
-
-        self.image_section_layout.addLayout(self.image_scale_text_layout)
-
-        self.image_section_layout.addWidget(self.image)
-
-        self.layout.addLayout(self.image_section_layout)
+        self.layout.addWidget(self.image, alignment=QtCore.Qt.AlignCenter)
 
         self.button_layout.addWidget(self.button_next)
         self.button_layout.addWidget(self.button_delete)
@@ -119,7 +113,6 @@ class MyWidget(QWidget):
 
         image = QPixmap(self.path[0]).scaled(500+self.image_size, 500+self.image_size, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
         self.image.setPixmap(image)
-
 
     def next_img(self):
         try:
