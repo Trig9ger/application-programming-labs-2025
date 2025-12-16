@@ -2,7 +2,7 @@ import sys
 import os
 from pathlib import Path
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget, QApplication, QPushButton
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget, QApplication, QPushButton, QFileDialog
 from PyQt5.QtGui import QPixmap
 
 project_root = Path(__file__).parent.parent
@@ -13,11 +13,28 @@ sys.path.insert(0, str(lab2_path))
 from helpers import AnnotationIterator, annotation_check, write_csv
 
 class MyWidget(QWidget):
-    def __init__(self, annotation_name: str):
+    def __init__(self):
         super().__init__()
 
-        self.annotation_name = annotation_name
-        self.iterator = iter(AnnotationIterator(annotation_name))
+        self.button = QPushButton("Выбрать файл")
+        self.button.clicked.connect(self.select_file)
+
+        # Размещаем кнопку
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.button)
+        self.setLayout(self.layout)
+
+
+    def select_file(self):
+        self.annotation_name, _ = QFileDialog.getOpenFileName(
+            self,  # Важно: self как родитель
+            "Выберите файл",
+            "",
+            "Все файлы (*)"
+        )
+
+
+        self.iterator = iter(AnnotationIterator(self.annotation_name))
 
         #изображение и его название
         self.text = QLabel(self)
@@ -26,7 +43,6 @@ class MyWidget(QWidget):
         self.path = next(self.iterator)
         text = self.path[0].split('\\')[-1]
         image = QPixmap(self.path[0]).scaled(400, 300, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-        с = 1
 
         self.text.setText(text)
         self.text.setAlignment(QtCore.Qt.AlignCenter)
@@ -36,9 +52,12 @@ class MyWidget(QWidget):
         self.button_next = QPushButton("Next image!")
         self.button_delete = QPushButton("Delete this image!")
 
-        #расположение
-        self.layout = QVBoxLayout()
+        #очищение
+        self.layout.removeWidget(self.button)
+        self.button.deleteLater()
+        self.button = None
 
+        #расположение
         self.image_layout = QHBoxLayout()
         self.image_layout.addWidget(self.text)
         self.image_layout.addWidget(self.image)
@@ -55,6 +74,7 @@ class MyWidget(QWidget):
 
         self.button_next.clicked.connect(self.next_img)
         self.button_delete.clicked.connect(self.delete_img)
+
 
     def next_img(self):
         try:
@@ -79,3 +99,33 @@ class MyWidget(QWidget):
 
         #переходим на следующий элемент
         self.next_img()
+
+if __name__ == '__main__':
+    try:
+        app = QApplication(sys.argv)
+        widget = MyWidget()
+        widget.resize(800, 600)
+        widget.show()
+
+        sys.exit(app.exec_())
+
+    except FileNotFoundError as e:
+        print(f"Ошибка: {e}")
+        print("Убедитесь, что указан правильный путь к файлу аннотации.")
+        sys.exit(1)
+
+    except ValueError as e:
+        print(f"Ошибка: {e}")
+        print("Файл аннотации должен быть в формате CSV.")
+        sys.exit(1)
+
+    except PermissionError as e:
+        print(f"Ошибка доступа: {e}")
+        print("Убедитесь, что у вас есть права на чтение файла аннотации.")
+        sys.exit(1)
+
+    except Exception as e:
+        print(f"Неизвестная ошибка: {type(e).__name__}: {e}")
+        print("Попробуйте проверить корректность данных в файле аннотации.")
+        sys.exit(1)
+
