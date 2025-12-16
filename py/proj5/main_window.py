@@ -24,13 +24,36 @@ class MyWidget(QWidget):
         self.layout.addWidget(self.button)
         self.setLayout(self.layout)
 
+        self.annotation_name = ""
+        self.iterator = None
+        self.path = None
+
+        self.text = QLabel(self)
+        self.image = QLabel(self)
+
+        self.image_size = 0
+
+        self.button_up = QPushButton("+")
+        self.button_down = QPushButton("-")
+
+        self.button_next = QPushButton("Next image!")
+        self.button_delete = QPushButton("Delete this image!")
+
+
+
+        self.image_section_layout = QHBoxLayout()
+        self.image_scale_text_layout = QVBoxLayout()
+        self.image_scale_layout = QHBoxLayout()
+
+        self.button_layout = QHBoxLayout()
+
 
     def select_file(self):
         self.annotation_name, _ = QFileDialog.getOpenFileName(
-            self,  # Важно: self как родитель
-            "Выберите файл",
+            self,
+            "Выберите CSV файл",
             "",
-            "Все файлы (*)"
+            "CSV файлы (*.csv);;Все файлы (*)"
         )
 
 
@@ -42,29 +65,35 @@ class MyWidget(QWidget):
 
         self.path = next(self.iterator)
         text = self.path[0].split('\\')[-1]
-        image = QPixmap(self.path[0]).scaled(400, 300, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+        image = QPixmap(self.path[0]).scaled(500, 500, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
 
         self.text.setText(text)
         self.text.setAlignment(QtCore.Qt.AlignCenter)
         self.image.setPixmap(image)
 
-        #кнопки для итерации и удаления текущего изображения
-        self.button_next = QPushButton("Next image!")
-        self.button_delete = QPushButton("Delete this image!")
+
 
         #очищение
         self.layout.removeWidget(self.button)
         self.button.deleteLater()
         self.button = None
 
+        print(1)
+
         #расположение
-        self.image_layout = QHBoxLayout()
-        self.image_layout.addWidget(self.text)
-        self.image_layout.addWidget(self.image)
+        self.image_scale_text_layout.addWidget(self.text)
 
-        self.layout.addLayout(self.image_layout)
+        self.image_scale_layout.addWidget(self.button_up)
+        self.image_scale_layout.addWidget(self.button_down)
 
-        self.button_layout = QHBoxLayout()
+        self.image_scale_text_layout.addLayout(self.image_scale_layout)
+
+        self.image_section_layout.addLayout(self.image_scale_text_layout)
+
+        self.image_section_layout.addWidget(self.image)
+
+        self.layout.addLayout(self.image_section_layout)
+
         self.button_layout.addWidget(self.button_next)
         self.button_layout.addWidget(self.button_delete)
 
@@ -72,21 +101,47 @@ class MyWidget(QWidget):
 
         self.setLayout(self.layout)
 
+        self.button_up.clicked.connect(self.scale_up)
+        self.button_down.clicked.connect(self.scale_down)
         self.button_next.clicked.connect(self.next_img)
         self.button_delete.clicked.connect(self.delete_img)
+
+    def scale_up(self):
+        if self.image_size < 300:
+            self.image_size += 100
+
+        image = QPixmap(self.path[0]).scaled(500+self.image_size, 500+self.image_size, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+        self.image.setPixmap(image)
+
+    def scale_down(self):
+        if self.image_size > -300:
+            self.image_size -= 100
+
+        image = QPixmap(self.path[0]).scaled(500+self.image_size, 500+self.image_size, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+        self.image.setPixmap(image)
 
 
     def next_img(self):
         try:
             self.path = next(self.iterator)
             text = self.path[0].split('\\')[-1]
-            image = QPixmap(self.path[0]).scaled(400, 300, aspectRatioMode = QtCore.Qt.KeepAspectRatio)
+            image = QPixmap(self.path[0]).scaled(500, 500, aspectRatioMode = QtCore.Qt.KeepAspectRatio)
 
             self.text.setText(text)
             self.text.setAlignment(QtCore.Qt.AlignCenter)
             self.image.setPixmap(image)
+            self.image_size = 0
+
         except StopIteration:
             self.iterator = iter(AnnotationIterator(self.annotation_name))
+            self.path = next(self.iterator)
+            text = self.path[0].split('\\')[-1]
+            image = QPixmap(self.path[0]).scaled(500, 500, aspectRatioMode = QtCore.Qt.KeepAspectRatio)
+
+            self.text.setText(text)
+            self.text.setAlignment(QtCore.Qt.AlignCenter)
+            self.image.setPixmap(image)
+            self.image_size=0
 
     def delete_img(self):
         #удаляем изображение
@@ -104,7 +159,7 @@ if __name__ == '__main__':
     try:
         app = QApplication(sys.argv)
         widget = MyWidget()
-        widget.resize(800, 600)
+        widget.resize(1200, 900)
         widget.show()
 
         sys.exit(app.exec_())
